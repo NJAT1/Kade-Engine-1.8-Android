@@ -1,0 +1,54 @@
+name: Build Android APK
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          ndk-version: '21.4.7075529' # Forces installation of r21e needed by Lime
+
+      - name: Setup Haxe Environment
+        uses: krdlab/setup-haxe@v1
+        with:
+          haxe-version: 4.1.5 # Downgraded from 4.2.5 to fix Ritzable macro errors
+
+      - name: Install Game Dependencies
+        run: |
+          haxelib setup ~/haxelib
+          haxelib install lime 7.9.0
+          haxelib install openfl 9.1.0
+          haxelib install flixel 4.11.0
+          haxelib install flixel-addons
+          
+          # Fixed your placeholder URLs to point to the actual FNF/Android dependencies
+          haxelib git faxe https://github.com
+          haxelib git polymod https://github.com
+          haxelib git extension-androidtools https://github.com
+          
+          # Replaced "lime setup android" with direct paths so the server doesn't freeze
+          haxelib run lime config ANDROID_SDK $ANDROID_HOME
+          haxelib run lime config ANDROID_NDK $ANDROID_HOME/ndk/21.4.7075529
+          haxelib run lime config JAVA_HOME $JAVA_HOME
+
+      - name: Compile Game to APK
+        run: haxelib run lime build android -release
+
+      - name: Upload Finished APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Kade-Engine-1.8-APK
+          path: export/release/android/bin/app/build/outputs/apk/release/*.apk
+          
