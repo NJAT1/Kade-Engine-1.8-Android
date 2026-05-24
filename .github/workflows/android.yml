@@ -15,11 +15,11 @@ jobs:
           distribution: 'temurin'
           java-version: '11'
 
-      - name: Download and Extract NDK r21e
+      - name: Setup Android NDK via SDK Manager
         run: |
-          wget -q https://google.com
-          unzip -q android-ndk-r21e-linux-x86_64.zip
-          echo "NDK_PATH=$PWD/android-ndk-r21e" >> $GITHUB_ENV
+          # Use the built-in sdkmanager to safely pull down the precise r21e NDK binary layout
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "ndk;21.4.7075529"
 
       - name: Setup Haxe Environment
         uses: krdlab/setup-haxe@v1
@@ -38,9 +38,8 @@ jobs:
           haxelib git polymod https://github.com
           haxelib git extension-androidtools https://github.com
           
-          # Directly referencing the built-in $ANDROID_HOME path instead of downloading a duplicate
           haxelib run lime config ANDROID_SDK $ANDROID_HOME
-          haxelib run lime config ANDROID_NDK ${{ env.NDK_PATH }}
+          haxelib run lime config ANDROID_NDK $ANDROID_HOME/ndk/21.4.7075529
           haxelib run lime config JAVA_HOME $JAVA_HOME
 
       - name: Compile Game to APK
